@@ -10,6 +10,11 @@ const configPath = path.join(app.getPath('userData'), 'config.json');
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 autoUpdater.logger = { info: () => {}, warn: () => {}, error: () => {} };
+autoUpdater.setFeedURL({
+  provider: 'github',
+  owner: 'hanhan124',
+  repo: 'toolbox'
+});
 
 function loadConfig() {
   try { if (fs.existsSync(configPath)) return JSON.parse(fs.readFileSync(configPath, 'utf8')); } catch (e) {}

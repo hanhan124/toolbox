@@ -27,12 +27,12 @@
       "artifactName": "ToolBox-${version}-setup.exe"
     },
     "nsis": {
-      "oneClick": true,
+      "oneClick": false,
       "perMachine": false,
-      "allowElevation": false,
-      "allowToChangeInstallationDirectory": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": false,
+      "createStartMenuShortcut": true,
       "shortcutName": "ToolBox",
       "installerIcon": "icon.ico",
       "uninstallerIcon": "icon.ico",

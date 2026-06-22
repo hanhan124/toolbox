@@ -2,6 +2,7 @@ import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { convertTiff, type TiffOptions } from "../../lib/tiff-convert";
 import ConvertOptions from "./ConvertOptions";
+import { FolderOpen, Folder } from "lucide-react";
 
 export default function TiffPage() {
   const [folder, setFolder] = useState<{ name: string; path: string } | null>(null);
@@ -37,14 +38,14 @@ export default function TiffPage() {
       {!folder ? (
         <div className="tiff-empty">
           <button className="pick-folder-btn" onClick={handlePick}>
-            <span className="pick-folder-icon">📁</span>
+            <span className="pick-folder-icon"><FolderOpen size={20} strokeWidth={1.5} /></span>
             <span>选择包含 TIFF 文件的文件夹</span>
           </button>
         </div>
       ) : (
         <>
           <div className="folder-card">
-            <span className="folder-card-icon">📁</span>
+            <span className="folder-card-icon"><Folder size={24} strokeWidth={1.5} /></span>
             <div className="folder-card-info">
               <span className="folder-card-name">{folder.name}</span>
               <span className="folder-card-path">{folder.path}</span>

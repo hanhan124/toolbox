@@ -1,0 +1,45 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nickelpack/tauri/v2/core/tauri-config-schema/schema.json",
+  "productName": "Mynx",
+  "version": "0.1.0",
+  "identifier": "com.fanguanghan.mynx",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Mynx",
+        "width": 440,
+        "height": 620,
+        "minWidth": 360,
+        "minHeight": 380,
+        "resizable": true,
+        "decorations": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [],
+      "pubkey": ""
+    }
+  }
+}

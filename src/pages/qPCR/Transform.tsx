@@ -12,6 +12,7 @@ type Status = 'ready' | 'processing' | 'success' | 'error';
 
 export default function Transform({ workbook, sheetName, onComplete }: TransformProps) {
   const [status, setStatus] = useState<Status>('ready');
+  const [errorMsg, setErrorMsg] = useState('');
 
   const canExecute = workbook && sheetName && status !== 'processing';
 
@@ -43,7 +44,8 @@ export default function Transform({ workbook, sheetName, onComplete }: Transform
 
       setStatus('success');
       onComplete(geneNames);
-    } catch {
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : String(e));
       setStatus('error');
     }
   }
@@ -73,7 +75,7 @@ export default function Transform({ workbook, sheetName, onComplete }: Transform
           <span className="transform-desc">转换为转置表格，缺失值自动处理并标黄</span>
         </div>
         <span className="transform-status" style={{ color: statusColors[status] }}>
-          {statusLabels[status]}
+          {status === 'error' && errorMsg ? `出错: ${errorMsg}` : statusLabels[status]}
         </span>
       </div>
       <button

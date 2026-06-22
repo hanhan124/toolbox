@@ -93,7 +93,7 @@ export function calculateQpcr(
 
         geneRowNum++;
         const outRow = geneSheet.getRow(geneRowNum);
-        outRow.getCell(1).value = r - 1;
+        outRow.getCell(1).value = rVal;
         outRow.getCell(2).value = tVal;
         outRow.getCell(6).value = groupName;
 
@@ -108,7 +108,7 @@ export function calculateQpcr(
 
       if (reValues.length === repeatCount) {
         const avg = reValues.reduce((a, b) => a + b, 0) / reValues.length;
-        const variance = reValues.reduce((sum, v) => sum + Math.pow(v - avg, 2), 0) / reValues.length;
+        const variance = reValues.reduce((sum, v) => sum + Math.pow(v - avg, 2), 0) / (reValues.length - 1 || 1);
         const stdev = Math.sqrt(variance);
 
         for (let i = 0; i < reValues.length; i++) {

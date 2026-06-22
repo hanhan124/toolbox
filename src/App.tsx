@@ -1,10 +1,33 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import TitleBar from "./components/TitleBar";
+import Sidebar from "./components/Sidebar";
+import Home from "./components/Home";
+import TiffPage from "./pages/tiff/TiffPage";
+import QpcrPage from "./pages/qPCR/QpcrPage";
 
-function Home() {
+const pageTitles: Record<string, string> = {
+  "/": "主页",
+  "/qpcr": "qPCR Tools",
+  "/tiff": "TIFF 转 JPG",
+};
+
+function Layout() {
+  const location = useLocation();
+  const title = pageTitles[location.pathname] ?? "Mynx";
+
   return (
-    <div style={{ padding: "2rem" }}>
-      <h1>Mynx</h1>
-      <p>Welcome to Mynx - qPCR Tools & TIFF-to-JPG Converter</p>
+    <div className="app-layout">
+      <TitleBar title={title} />
+      <div className="app-body">
+        <Sidebar />
+        <main className="app-main">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/qpcr" element={<QpcrPage />} />
+            <Route path="/tiff" element={<TiffPage />} />
+          </Routes>
+        </main>
+      </div>
     </div>
   );
 }
@@ -12,9 +35,7 @@ function Home() {
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-      </Routes>
+      <Layout />
     </BrowserRouter>
   );
 }

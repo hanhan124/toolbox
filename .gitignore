@@ -30,3 +30,9 @@ src-tauri/gen/
 
 # Cargo (local build target redirect)
 .cargo/
+
+# Internal docs (not for GitHub)
+BUILD.md
+RELEASE.md
+PROJECT.md
+docs/

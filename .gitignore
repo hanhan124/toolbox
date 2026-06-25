@@ -6,6 +6,12 @@ dist/
 target/
 tmp-icons/
 
+# Portable build artifacts (不应提交到仓库)
+mynx.exe
+mynx-portable.exe
+mynx-*.zip
+dist-singlefile/
+
 # IDE
 .vscode/
 .idea/

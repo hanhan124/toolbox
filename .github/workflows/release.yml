@@ -36,7 +36,16 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         run: |
           $keyPath = "$env:TEMP\mynx.key"
-          $env:TAURI_SIGNING_PRIVATE_KEY | Out-File -FilePath $keyPath -Encoding ASCII
+          # Use .NET to write exactly the secret bytes (no BOM, no extra newline, no CRLF mangling)
+          [System.IO.File]::WriteAllText($keyPath, $env:TAURI_SIGNING_PRIVATE_KEY, [System.Text.Encoding]::ASCII)
+          $len = (Get-Item $keyPath).Length
+          Write-Host "Key file written: $keyPath ($len bytes)"
+          if ($len -eq 0) {
+            Write-Host "::warning::Key file is EMPTY — secret TAURI_SIGNING_PRIVATE_KEY is unset or blank"
+          } else {
+            $lines = (Get-Content $keyPath).Count
+            Write-Host "Key file has $lines line(s)"
+          }
           echo "key_path=$keyPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding ASCII
 
       - name: Build
@@ -52,7 +61,6 @@ jobs:
           SIGN_PWD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           $ErrorActionPreference = 'Continue'
-          $InformationPreference = 'Continue'
 
           $pkg = Get-Content "package.json" | ConvertFrom-Json
           $version = $pkg.version
@@ -66,24 +74,31 @@ jobs:
           } else {
             Write-Host "    (nsis dir missing)"
           }
-          Write-Host "==> Release exe files:"
-          Get-ChildItem $releaseDir -Filter "*.exe" -ErrorAction SilentlyContinue |
-            ForEach-Object { Write-Host "    $($_.Name)" }
 
-          # --- NSIS installer + signature ---
+          # --- NSIS installer + signature (report whether build signed it) ---
           $nsisExe = Get-ChildItem "$nsisDir\Mynx*_setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
           $nsisSig = Get-ChildItem "$nsisDir\Mynx*_setup.exe.sig" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($nsisSig) {
+            Write-Host "==> NSIS setup is SIGNED (sig present)"
+          } else {
+            Write-Host "==> NSIS setup is NOT signed (no .sig) — updater signature will be missing"
+          }
 
-          # --- Portable exe: copy + sign (non-fatal) ---
+          # --- Portable exe: copy + sign via env var (NOT -k <path>) ---
           $portableSrc = Get-ChildItem "$releaseDir\mynx.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
           $portableDest = "$releaseDir\Mynx_${version}_portable.exe"
 
           if ($portableSrc) {
             Copy-Item $portableSrc.FullName $portableDest -Force
-            Write-Host "==> Signing portable exe..."
-            & npx tauri signer sign -k "$env:KEY_PATH" -p "$env:SIGN_PWD" "$portableDest"
+            Write-Host "==> Signing portable exe (passing key as env var, not path)..."
+            # Feed the key CONTENT via env var so tauri doesn't try to base64-decode a file path
+            $env:TAURI_SIGNING_PRIVATE_KEY = [System.IO.File]::ReadAllText($env:KEY_PATH)
+            $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = $env:SIGN_PWD
+            & npx tauri signer sign "$portableDest"
             if ($LASTEXITCODE -ne 0) {
               Write-Host "    ! portable signing returned exit code $LASTEXITCODE (ignored)"
+            } else {
+              Write-Host "    portable signing OK"
             }
           } else {
             Write-Host "==> No portable source exe found, skipping portable target"

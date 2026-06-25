@@ -217,23 +217,23 @@ export default function UpdateNotification() {
 
       // Download using curl via Tauri shell
       const exePath = await invoke<string>("app_exe_path");
-      const { os } = await import("@tauri-apps/plugin-os");
-      const tempDir = os.tmpdir();
-      const tempExe = tempDir + "\mynx_update_temp.exe";
-      
-      const { spawn } = await import("@tauri-apps/plugin-shell");
-      const { writeBinaryFile } = await import("@tauri-apps/plugin-fs");
-      
+      const { tempDir } = await import("@tauri-apps/api/path");
+      const tmpDir = await tempDir();
+      const tempExe = tmpDir + "\\mynx_update_temp.exe";
+
+      const { Command } = await import("@tauri-apps/plugin-shell");
+      const { writeFile } = await import("@tauri-apps/plugin-fs");
+
       // Download the portable exe
-      const downloader = spawn("curl", [
+      const downloader = Command.create("curl", [
         "-f",
         "-L",
         "-o", tempExe,
         portableDownload.url,
       ]);
-      
+
       // Wait for download
-      await downloader;
+      await downloader.execute();
 
       // Create a batch script to replace the exe and relaunch
       const escapedExePath = exePath.replace(/\\/g, "\\\\");
@@ -249,12 +249,12 @@ start "" "${escapedExePath}"
 exit
 `;
       
-      const batchPath = tempDir + "\mynx_update_helper.bat";
-      await writeBinaryFile(batchPath, new TextEncoder().encode(batchContent));
-      
+      const batchPath = tmpDir + "\\mynx_update_helper.bat";
+      await writeFile(batchPath, new TextEncoder().encode(batchContent));
+
       // Launch the batch script and exit the app
-      const batchShell = await spawn("cmd", ["/c", batchPath]);
-      await batchShell;
+      const batchShell = Command.create("cmd", ["/c", batchPath]);
+      await batchShell.execute();
       
       // Exit the current process using Tauri process plugin
       await invoke<void>("terminate");

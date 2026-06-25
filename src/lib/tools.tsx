@@ -42,7 +42,7 @@ export interface Tool {
   showInSidebar: boolean;
 }
 
-const QpcrPage = lazy(() => import("@/pages/qpcr/QpcrPage"));
+const QpcrPage = lazy(() => import("@/pages/qPCR/QpcrPage"));
 const TiffPage = lazy(() => import("@/pages/tiff/TiffPage"));
 
 export const tools: Tool[] = [

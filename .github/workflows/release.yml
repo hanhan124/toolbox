@@ -1,5 +1,8 @@
 name: Build & Release
 
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+
 on:
   push:
     tags:
@@ -50,6 +53,9 @@ jobs:
 
       - name: Build (NSIS installer)
         shell: pwsh
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           npm run tauri build
           if ($LASTEXITCODE -ne 0) { throw "tauri build failed with exit code $LASTEXITCODE" }
@@ -104,11 +110,13 @@ jobs:
             if ($env:KEY_AVAILABLE -eq 'true' -and $keyPath -and (Test-Path $keyPath) -and $keyPassword) {
               Write-Host "==> Signing portable exe..."
               & npx tauri signer sign -f "$keyPath" -p "$keyPassword" "$portableDest"
-              if ($LASTEXITCODE -eq 0) {
+              $signExit = $LASTEXITCODE
+              if ($signExit -eq 0) {
                 Write-Host "    Portable signing OK"
               } else {
-                Write-Host "    Portable signing failed (exit $LASTEXITCODE), continuing anyway"
+                Write-Host "    Portable signing failed (exit $signExit), continuing anyway"
               }
+              $LASTEXITCODE = 0
             } else {
               Write-Host "==> No key file or password, skipping portable signing"
             }

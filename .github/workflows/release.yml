@@ -52,10 +52,14 @@ jobs:
         shell: pwsh
         run: |
           npm run tauri build
+          if ($LASTEXITCODE -ne 0) { throw "tauri build failed with exit code $LASTEXITCODE" }
           Write-Host "==> Build done. Bundle contents:"
           $nsis = "src-tauri\target\release\bundle\nsis"
           if (Test-Path $nsis) {
             Get-ChildItem $nsis | ForEach-Object { Write-Host "    $($_.Name)  ($($_.Length) bytes)" }
+          } else {
+            Write-Host "::warning::NSIS bundle directory not found!"
+            Get-ChildItem "src-tauri\target\release\bundle" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "    bundle/: $($_.Name)" }
           }
 
       - name: Prepare release assets
@@ -78,6 +82,11 @@ jobs:
           # 1. NSIS installer + .sig
           $nsisExe = Get-ChildItem "$nsisDir\Mynx*_setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
           $nsisSig = Get-ChildItem "$nsisDir\Mynx*_setup.exe.sig" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($nsisExe) {
+            Write-Host "==> NSIS installer found: $($nsisExe.Name) ($($nsisExe.Length) bytes)"
+          } else {
+            Write-Host "==> NSIS installer NOT found"
+          }
           if ($nsisSig) {
             Write-Host "==> NSIS setup IS signed: $($nsisSig.Name)"
           } else {
@@ -92,10 +101,9 @@ jobs:
             Copy-Item $portableSrc.FullName $portableDest -Force
             Write-Host "==> Portable exe copied: $portableDest"
 
-            # Sign portable exe
-            if ($keyPath -and (Test-Path $keyPath) -and $keyPassword) {
+            if ($env:KEY_AVAILABLE -eq 'true' -and $keyPath -and (Test-Path $keyPath) -and $keyPassword) {
               Write-Host "==> Signing portable exe..."
-              & npx tauri sign sign -f "$keyPath" -p "$keyPassword" "$portableDest"
+              & npx tauri signer sign -f "$keyPath" -p "$keyPassword" "$portableDest"
               if ($LASTEXITCODE -eq 0) {
                 Write-Host "    Portable signing OK"
               } else {
@@ -104,6 +112,8 @@ jobs:
             } else {
               Write-Host "==> No key file or password, skipping portable signing"
             }
+          } else {
+            Write-Host "::warning::mynx.exe not found in $releaseDir"
           }
 
           # 3. latest.json

@@ -80,8 +80,8 @@ jobs:
           Write-Host "==> Preparing assets for version $version"
 
           # 1. NSIS installer + .sig
-          $nsisExe = Get-ChildItem "$nsisDir\Mynx*_setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
-          $nsisSig = Get-ChildItem "$nsisDir\Mynx*_setup.exe.sig" -ErrorAction SilentlyContinue | Select-Object -First 1
+          $nsisExe = Get-ChildItem "$nsisDir\Mynx*setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          $nsisSig = Get-ChildItem "$nsisDir\Mynx*setup.exe.sig" -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($nsisExe) {
             Write-Host "==> NSIS installer found: $($nsisExe.Name) ($($nsisExe.Length) bytes)"
           } else {

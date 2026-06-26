@@ -5,11 +5,11 @@ import Sidebar from "@/components/Sidebar";
 import Home from "@/pages/Home";
 import ToastContainer from "@/components/Toast";
 import UpdateNotification from "@/components/UpdateNotification";
-import { tools, getpageTitle } from "@/lib/tools";
+import { tools, getPageTitle } from "@/lib/tools";
 
 function Layout() {
   const location = useLocation();
-  const title = getpageTitle(location.pathname);
+  const title = getPageTitle(location.pathname);
 
   return (
     <div className="app-layout">

@@ -176,7 +176,7 @@ export function transformQpcrData(sourceSheet: ExcelJS.Worksheet, targetWorkbook
   sheet.columns.forEach((column) => {
     let maxLength = 0;
     if (column.eachCell) {
-      column.eachCell({ includeEmpty: true }, (cell) => {
+      column.eachCell((cell) => {
         const length = cell.value ? String(cell.value).length : 10;
         if (length > maxLength) maxLength = length;
       });

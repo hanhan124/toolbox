@@ -1885,7 +1885,7 @@ dependencies = [
 
 [[package]]
 name = "mynx"
-version = "1.8.1"
+version = "1.8.4"
 dependencies = [
  "serde",
  "serde_json",

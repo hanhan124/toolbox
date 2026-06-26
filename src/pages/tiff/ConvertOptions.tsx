@@ -19,11 +19,11 @@ interface ConvertOptionsProps {
 }
 
 export default function ConvertOptions({ onConvert, loading, disabled }: ConvertOptionsProps) {
-  const [addLabel, setAddLabel] = useState("1");
+  const [addLabel, setAddLabel] = useState(true);
   const [font, setFont] = useState("Arial");
   const [fontSize, setFontSize] = useState(72);
-  const [bold, setBold] = useState("true");
-  const [italic, setItalic] = useState("false");
+  const [bold, setBold] = useState(true);
+  const [italic, setItalic] = useState(false);
   const [marginX, setMarginX] = useState("18");
   const [marginY, setMarginY] = useState("18");
   const [paddingX, setPaddingX] = useState("12");
@@ -33,11 +33,11 @@ export default function ConvertOptions({ onConvert, loading, disabled }: Convert
 
   const handleConvert = () => {
     onConvert({
-      watermark: addLabel === "1",
+      watermark: addLabel,
       font,
       fontSize,
-      bold: bold === "true",
-      italic: italic === "true",
+      bold,
+      italic,
       marginX: Number(marginX),
       marginY: Number(marginY),
       paddingX: Number(paddingX),
@@ -47,7 +47,7 @@ export default function ConvertOptions({ onConvert, loading, disabled }: Convert
     });
   };
 
-  const showTextOpts = addLabel === "1";
+  const showTextOpts = addLabel;
 
   return (
     <>
@@ -58,7 +58,7 @@ export default function ConvertOptions({ onConvert, loading, disabled }: Convert
 
       <div className="form-group">
         <label>添加文件名水印</label>
-        <select value={addLabel} onChange={(e) => setAddLabel(e.target.value)}>
+        <select value={addLabel ? "1" : "0"} onChange={(e) => setAddLabel(e.target.value === "1")}>
           <option value="1">是 — 添加文件名</option>
           <option value="0">否 — 纯转换</option>
         </select>
@@ -84,14 +84,14 @@ export default function ConvertOptions({ onConvert, loading, disabled }: Convert
           <div className="form-row">
             <div className="form-group">
               <label>粗体</label>
-              <select value={bold} onChange={(e) => setBold(e.target.value)}>
+              <select value={bold ? "1" : "0"} onChange={(e) => setBold(e.target.value === "1")}>
                 <option value="true">是</option>
                 <option value="false">否</option>
               </select>
             </div>
             <div className="form-group">
               <label>斜体</label>
-              <select value={italic} onChange={(e) => setItalic(e.target.value)}>
+              <select value={italic ? "1" : "0"} onChange={(e) => setItalic(e.target.value === "1")}>
                 <option value="false">否</option>
                 <option value="true">是</option>
               </select>

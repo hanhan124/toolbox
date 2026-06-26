@@ -20,8 +20,13 @@ export interface ConvertResult {
   outputDir: string;
 }
 
-function escapePsSingleQuoted(value: string): string {
-  return value.replace(/'/g, "''");
+function escapePsString(value: string): string {
+  return value
+    .replace(/'/g, "''")
+    .replace(/\$/g, "`$")
+    .replace(/`/g, "``")
+    .replace(/\(/g, "`(")
+    .replace(/\)/g, "`)");
 }
 
 export async function convertTiff(
@@ -51,7 +56,7 @@ export async function convertTiff(
   const psScript = `
 Add-Type -AssemblyName System.Drawing
 
-$FontName = '${escapePsSingleQuoted(options.font)}'
+$FontName = '${escapePsString(options.font)}'
 $FontSize = ${options.fontSize}
 $FontStyle = ${fontStyleExpr}
 $MarginX = ${options.marginX}
@@ -63,8 +68,8 @@ $BackgroundColor = [System.Drawing.Color]::FromArgb(${Math.round(
     options.transparency * 255
   )}, 90, 90, 90)
 $JpegQuality = ${options.quality}
-$InputDir = '${escapePsSingleQuoted(folderPath)}'
-$OutputDir = '${escapePsSingleQuoted(outputDir)}'
+$InputDir = '${escapePsString(folderPath)}'
+$OutputDir = '${escapePsString(outputDir)}'
 $AddFileName = $${options.watermark ? "true" : "false"}
 $jpgCodec = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq "image/jpeg" }
 $encoderParams = New-Object System.Drawing.Imaging.EncoderParameters(1)

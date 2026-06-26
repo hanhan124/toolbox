@@ -76,7 +76,7 @@ export function getToolByPath(path: string): Tool | undefined {
 }
 
 /** Page title for a given route path (used by TitleBar). */
-export function getpageTitle(path: string): string {
+export function getPageTitle(path: string): string {
   if (path === "/") return "Mynx";
   return getToolByPath(path)?.title ?? "Mynx";
 }

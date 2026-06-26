@@ -116,6 +116,15 @@ fn portable_self_update(new_exe_path: String) -> Result<(), String> {
         return Err(format!("Not a file: {}", new_exe_path));
     }
 
+    // Only allow paths within the temp directory
+    let temp = std::env::temp_dir();
+    if !new_path.starts_with(&temp) {
+        return Err(format!(
+            "Invalid path: must be in temp directory. Got: {}",
+            new_exe_path
+        ));
+    }
+
     let bak_path = current.with_extension("exe.bak");
 
     // 1. Rename current exe → .bak
@@ -133,10 +142,9 @@ fn portable_self_update(new_exe_path: String) -> Result<(), String> {
             format!("Failed to move new exe: {}", e)
         })?;
 
-    // 3. Clean up .bak
-    let _ = fs::remove_file(&bak_path);
-
-    // 4. Spawn new exe and exit
+    // 3. Spawn new exe and exit (NOTE: .bak is intentionally kept — Windows
+    //    locks the running image file, so deletion would fail. The new process
+    //    cleans it up via `cleanup_update_bak` on startup.)
     Command::new(&current)
         .spawn()
         .map_err(|e| format!("Failed to spawn new exe: {}", e))?;

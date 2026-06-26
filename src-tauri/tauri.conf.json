@@ -16,14 +16,14 @@
         "title": "Mynx",
         "width": 440,
         "height": 620,
-        "minWidth": 360,
+        "minWidth": 380,
         "minHeight": 380,
         "resizable": true,
         "decorations": false
       }
     ],
     "security": {
-      "csp": "default-src 'self'; img-src 'self' data: asset: http://asset.localhost; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' ipc: http://ipc.localhost https://github.com https://objects.githubusercontent.com"
+      "csp": "default-src 'self'; img-src 'self' data: asset: http://asset.localhost; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' ipc: http://ipc.localhost https://github.com https://objects.githubusercontent.com https://api.open-meteo.com https://ipwho.is http://ip-api.com"
     }
   },
   "bundle": {
@@ -39,7 +39,6 @@
     ],
     "windows": {
       "nsis": {
-        "template": "installer/installer.nsi",
         "installMode": "both",
         "installerIcon": "icons/icon.ico",
         "uninstallerIcon": "icons/icon.ico",

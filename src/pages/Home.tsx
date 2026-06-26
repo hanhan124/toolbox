@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import AppMark from "@/components/AppMark";
+import WeatherWidget from "@/components/WeatherWidget";
 import { tools } from "@/lib/tools";
 
 export default function Home() {
@@ -15,6 +16,8 @@ export default function Home() {
           <div className="home-subtitle">好用的工具，都在这里</div>
         </div>
       </div>
+
+      <WeatherWidget />
 
       <div className="tool-grid">
         {tools.map((tool) => {
@@ -39,7 +42,8 @@ export default function Home() {
       </div>
 
       <div className="home-footer">
-        <span className="home-footer-line">© 2026 Han</span>
+        <span className="home-footer-line">Mynx · Tauri + React + Rust</span>
+        <span className="home-footer-line">© 2026 Han · MIT License</span>
       </div>
     </div>
   );

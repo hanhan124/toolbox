@@ -4,6 +4,7 @@ import { relaunch } from "@tauri-apps/plugin-process";
 import { invoke } from "@tauri-apps/api/core";
 import { getVersion } from "@tauri-apps/api/app";
 import { Download, X, AlertCircle, Loader2 } from "lucide-react";
+import { compareVersions } from "@/lib/version";
 
 type UpdateStatus = "idle" | "available" | "downloading" | "ready" | "error";
 
@@ -41,18 +42,6 @@ interface LatestJson {
   platforms?: Record<string, { url?: string; signature?: string }>;
 }
 
-function compareVersions(a: string, b: string): number {
-  const aParts = a.replace(/^v/, '').split('.').map(Number);
-  const bParts = b.replace(/^v/, '').split('.').map(Number);
-  for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
-    const aPart = aParts[i] || 0;
-    const bPart = bParts[i] || 0;
-    if (aPart > bPart) return 1;
-    if (aPart < bPart) return -1;
-  }
-  return 0;
-}
-
 export default function UpdateNotification() {
   const [state, setState] = useState<UpdateState>({
     status: "idle",
@@ -78,12 +67,15 @@ export default function UpdateNotification() {
           isPortableRef.current = false;
         }
 
+        let foundUpdate = false;
+
         if (isPortableRef.current) {
           await invoke("cleanup_update_bak").catch(() => {});
-          await handlePortableCheck();
+          foundUpdate = await handlePortableCheck();
         } else {
           const update = await check();
           if (update) {
+            foundUpdate = true;
             updateRef.current = update;
             setState((prev) => ({
               ...prev,
@@ -93,6 +85,11 @@ export default function UpdateNotification() {
             }));
           }
         }
+
+        if (!foundUpdate) {
+          const { showToast } = await import("./Toast");
+          showToast("您已使用最新版本", "success");
+        }
       } catch {
         // silently ignore update check failures
       }
@@ -101,15 +98,15 @@ export default function UpdateNotification() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handlePortableCheck = async () => {
+  const handlePortableCheck = async (): Promise<boolean> => {
     try {
       const resp = await fetch(UPDATE_ENDPOINT);
-      if (!resp.ok) return;
+      if (!resp.ok) return false;
 
       const latest: LatestJson = await resp.json();
       const currentVersion = await getVersion();
 
-      if (compareVersions(latest.version, currentVersion) <= 0) return;
+      if (compareVersions(latest.version, currentVersion) <= 0) return false;
 
       const ghBase = `https://github.com/hanhan124/mynx/releases/download/v${latest.version}`;
       portableUrlRef.current = `${ghBase}/Mynx_${latest.version}_portable.exe`;
@@ -120,8 +117,9 @@ export default function UpdateNotification() {
         version: latest.version,
         body: latest.body || latest.notes,
       }));
+      return true;
     } catch {
-      // silently ignore portable update check failures
+      return false;
     }
   };
 

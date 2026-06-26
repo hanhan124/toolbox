@@ -41,20 +41,52 @@ export async function detectPortable(): Promise<boolean> {
   }
 }
 
-/** Fetch and parse latest.json, returns version + body. */
+/** Fetch and parse latest.json, returns version + body. Retries once on transient failures. */
 async function fetchLatestMeta(): Promise<{
   version: string;
   body: string;
 }> {
-  const resp = await fetch(LATEST_JSON_URL);
-  if (!resp.ok) {
-    throw new Error(`GitHub API returned ${resp.status}`);
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const resp = await fetch(LATEST_JSON_URL, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (!resp.ok) {
+        if (resp.status === 404 || resp.status === 403) {
+          throw new Error(
+            "更新信息获取失败 (404)，请确认 GitHub Release 已包含 latest.json",
+          );
+        }
+        if (resp.status >= 500) {
+          throw new Error(`服务器暂时不可用 (${resp.status})，请稍后重试`);
+        }
+        throw new Error(`GitHub API 返回 ${resp.status}`);
+      }
+      const json = await resp.json();
+      return {
+        version: json.version,
+        body: json.body || json.notes || "",
+      };
+    } catch (e) {
+      lastError = e;
+      if (attempt === 0 && e instanceof DOMException && e.name === "AbortError") {
+        // timeout on first attempt — retry
+        continue;
+      }
+      if (attempt === 0 && e instanceof Error && e.message.includes("500")) {
+        // server error — retry
+        continue;
+      }
+      // don't retry other errors (404, CSP block, etc.)
+      break;
+    }
   }
-  const json = await resp.json();
-  return {
-    version: json.version,
-    body: json.body || json.notes || "",
-  };
+
+  throw lastError;
 }
 
 /* ---- main entry -------------------------------------------------------- */

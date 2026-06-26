@@ -49,11 +49,17 @@ function toErrorText(e: unknown): string {
     if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("fetch")) {
       return "网络连接失败，请检查网络后重试";
     }
-    if (msg.includes("signature")) {
-      return "安装包签名验证失败，请稍后重试";
+    if (msg.includes("signature") || msg.includes("verify") || msg.includes("pubkey")) {
+      return "安装包签名验证失败，请联系开发者确认签名密钥已配置";
     }
-    if (msg.includes("permission") || msg.includes("denied")) {
+    if (msg.includes("permission") || msg.includes("denied") || msg.includes("EACCES")) {
       return "权限不足，请以管理员身份运行后重试";
+    }
+    if (msg.includes("404") || msg.includes("not found") || msg.includes("not_found")) {
+      return "更新文件尚未就绪，请稍后重试";
+    }
+    if (msg.includes("timed out") || msg.includes("timeout") || msg.includes("ETIMEDOUT")) {
+      return "网络连接超时，请检查网络后重试";
     }
     return msg;
   }
@@ -198,7 +204,7 @@ export default function UpdateNotification() {
     }
   }, [beginDownload, updateProgressUi, finishDownload]);
 
-  /* ---- download: portable update --------------------------------------- */
+  /* ---- download: portable update (with retry) ------------------------- */
   const handlePortableUpdate = useCallback(async () => {
     const url = portableUrlRef.current;
     if (!url) {
@@ -208,66 +214,91 @@ export default function UpdateNotification() {
 
     beginDownload();
 
-    try {
-      const { tempDir } = await import("@tauri-apps/api/path");
-      const tmpDir = await tempDir();
-      const tempExe = `${tmpDir}\\mynx_update_temp.exe`;
+    let lastError: unknown;
 
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(
-          response.status === 404
-            ? "安装包尚未就绪，请稍后重试"
-            : `下载失败 (${response.status})`,
-        );
-      }
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const { tempDir } = await import("@tauri-apps/api/path");
+        const tmpDir = await tempDir();
+        const tempExe = `${tmpDir}\\mynx_update_temp.exe`;
 
-      const contentLength = parseInt(response.headers.get("content-length") || "0", 10);
-      totalRef.current = contentLength;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000);
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
 
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error("无法读取响应数据");
-
-      const chunks: Uint8Array[] = [];
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
-        downloadedRef.current += value.length;
-        updateProgressUi(contentLength);
-      }
-
-      // Assemble
-      const { writeFile } = await import("@tauri-apps/plugin-fs");
-      const totalBytes = new Uint8Array(downloadedRef.current);
-      let offset = 0;
-      for (const chunk of chunks) {
-        totalBytes.set(chunk, offset);
-        offset += chunk.length;
-      }
-      await writeFile(tempExe, totalBytes);
-
-      finishDownload();
-
-      // Auto-restart after brief delay so user can see "下载完成"
-      setTimeout(async () => {
-        try {
-          await invoke<undefined>("portable_self_update", { newExePath: tempExe });
-        } catch (e) {
-          setState((prev) => ({
-            ...prev,
-            status: "error",
-            error: toErrorText(e),
-          }));
+        if (!response.ok) {
+          throw new Error(
+            response.status === 404
+              ? "安装包尚未就绪，请稍后重试"
+              : `下载失败 (${response.status})`,
+          );
         }
-      }, 1500);
-    } catch (e) {
-      setState((prev) => ({
-        ...prev,
-        status: "error",
-        error: toErrorText(e),
-      }));
+
+        const contentLength = parseInt(response.headers.get("content-length") || "0", 10);
+        totalRef.current = contentLength;
+
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error("无法读取响应数据");
+
+        const chunks: Uint8Array[] = [];
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          downloadedRef.current += value.length;
+          updateProgressUi(contentLength);
+        }
+
+        // Assemble
+        const { writeFile } = await import("@tauri-apps/plugin-fs");
+        const totalBytes = new Uint8Array(downloadedRef.current);
+        let offset = 0;
+        for (const chunk of chunks) {
+          totalBytes.set(chunk, offset);
+          offset += chunk.length;
+        }
+        await writeFile(tempExe, totalBytes);
+
+        finishDownload();
+
+        // Auto-restart after brief delay so user can see "下载完成"
+        setTimeout(async () => {
+          try {
+            await invoke<undefined>("portable_self_update", { newExePath: tempExe });
+          } catch (e) {
+            setState((prev) => ({
+              ...prev,
+              status: "error",
+              error: toErrorText(e),
+            }));
+          }
+        }, 1500);
+
+        return; // success — exit retry loop
+      } catch (e) {
+        lastError = e;
+        // Only retry on timeout or 5xx server errors
+        if (
+          attempt === 0 &&
+          ((e instanceof DOMException && e.name === "AbortError") ||
+            (e instanceof Error && /5\d\d/.test(e.message)))
+        ) {
+          // Reset download state for retry
+          downloadedRef.current = 0;
+          totalRef.current = 0;
+          startTimeRef.current = Date.now();
+          continue;
+        }
+        break;
+      }
     }
+
+    setState((prev) => ({
+      ...prev,
+      status: "error",
+      error: toErrorText(lastError),
+    }));
   }, [beginDownload, updateProgressUi, finishDownload]);
 
   /* ---- actions --------------------------------------------------------- */

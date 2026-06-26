@@ -3,9 +3,9 @@
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -16,7 +16,7 @@
 .modal-box {
   background: var(--bg-elevated);
   border: 0.5px solid var(--border);
-  border-radius: 12px;
+  border-radius: 16px;
   width: min(340px, 100vw - 32px);
   box-shadow: var(--shadow-lg);
   animation: modalIn 220ms var(--ease-out);
@@ -73,7 +73,7 @@
   flex-direction: column;
   gap: 8px;
   padding: 10px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1.5px solid transparent;
   background: var(--bg-hover);
   text-align: left;
@@ -94,7 +94,7 @@
 .theme-tile-mockup {
   width: 100%;
   height: 64px;
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
   display: flex;
   position: relative;
@@ -213,7 +213,7 @@
   margin-bottom: 12px;
   padding: 10px 12px;
   background: var(--bg-hover);
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .about-row {
@@ -256,7 +256,7 @@
 .card {
   background: var(--bg-card);
   border: 0.5px solid var(--border);
-  border-radius: 10px;
+  border-radius: 12px;
   margin-bottom: 10px;
   transition: border-color 200ms var(--ease-smooth);
 }
@@ -307,7 +307,7 @@
   gap: 10px;
   padding: 8px 10px;
   background: var(--bg-hover);
-  border-radius: 8px;
+  border-radius: 10px;
   margin-bottom: 8px;
   transition: background 180ms var(--ease-smooth);
 }
@@ -316,11 +316,23 @@
   background: rgba(128, 128, 128, 0.08);
 }
 
+.file-display--drag {
+  border: 1.5px dashed var(--accent);
+  background: var(--accent-soft);
+}
+
+.drop-hint {
+  font-size: 11px;
+  color: var(--accent);
+  white-space: nowrap;
+  font-weight: 500;
+}
+
 .file-icon {
   width: 34px;
   height: 34px;
   min-width: 34px;
-  border-radius: 7px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -357,7 +369,7 @@
   gap: 4px;
   padding: 4px 12px;
   border: 0.5px solid var(--border-strong);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--bg-card);
   color: var(--text-primary);
   font-size: 13px;
@@ -428,16 +440,20 @@
 .form-group input,
 .form-group input[type="number"] {
   width: 100%;
-  padding: 5px 22px 5px 10px;
+  padding: 5px 10px;
   border: 0.5px solid var(--border-strong);
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 13px;
   background: var(--bg-card);
   color: var(--text-primary);
   cursor: pointer;
-  appearance: none;
   transition: border-color 200ms var(--ease-smooth);
   height: 30px;
+}
+
+.form-group select {
+  padding-right: 22px;
+  appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L4 4L7 1' stroke='%23999' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 8px center;
@@ -468,7 +484,7 @@
   gap: 8px;
   padding: 8px 10px;
   background: var(--accent-soft);
-  border-radius: 6px;
+  border-radius: 8px;
   margin-bottom: 10px;
   font-size: 12px;
   color: var(--accent);
@@ -481,7 +497,7 @@
   gap: 8px;
   padding: 10px 12px;
   background: rgba(var(--green-rgb), 0.08);
-  border-radius: 8px;
+  border-radius: 10px;
   margin-top: 10px;
   font-size: 12px;
   color: var(--green);
@@ -497,9 +513,9 @@
 .loading-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -510,7 +526,7 @@
 .loading-box {
   background: var(--bg-elevated);
   border: 0.5px solid var(--border);
-  border-radius: 14px;
+  border-radius: 18px;
   padding: 24px 32px;
   text-align: center;
   box-shadow: var(--shadow-lg);
@@ -531,7 +547,7 @@
 .toast-container {
   position: fixed;
   bottom: 16px;
-  right: 14px;
+  right: 16px;
   z-index: 1001;
   display: flex;
   flex-direction: column-reverse;
@@ -542,7 +558,7 @@
 
 .toast {
   padding: 8px 14px;
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--bg-elevated);
   border: 0.5px solid var(--border);
   box-shadow: var(--shadow-md);
@@ -599,10 +615,10 @@
   width: 300px;
   background: var(--bg-card);
   border: 0.5px solid var(--border);
-  border-radius: 10px;
+  border-radius: 14px;
   padding: 12px;
   box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(30px) saturate(180%);
 }
 
 .update-header {
@@ -614,7 +630,7 @@
 .update-icon-wrap {
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;

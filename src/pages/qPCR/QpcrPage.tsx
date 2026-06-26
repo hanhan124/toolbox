@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { FlaskConical, FileSpreadsheet } from 'lucide-react';
+import { IconFlask, IconFileSpreadsheet } from '@tabler/icons-react';
 import FileSelect from './FileSelect';
 import Transform from './Transform';
 import Calculate from './Calculate';
@@ -63,7 +63,7 @@ export default function QpcrPage() {
 
       <div className="panel-header">
         <div className="panel-icon" style={{ background: '#0a84ff' }}>
-          <FlaskConical size={18} color="white" strokeWidth={1.8} />
+          <IconFlask size={18} color="white" stroke={2} />
         </div>
         <div className="panel-title">
           <h2>qPCR 分析</h2>
@@ -74,7 +74,7 @@ export default function QpcrPage() {
       {/* 步骤 0: 文件 */}
       <div className="card">
         <div className="card-title">
-          <FileSpreadsheet size={14} strokeWidth={1.8} />
+          <IconFileSpreadsheet size={14} stroke={2} />
           <span>数据文件</span>
         </div>
         <div className="card-body">

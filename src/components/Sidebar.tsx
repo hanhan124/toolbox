@@ -4,11 +4,11 @@ import { useTheme } from "@/hooks/useTheme";
 import Modal from "@/components/Modal";
 import ThemePicker from "@/components/ThemePicker";
 import AboutModal from "@/components/AboutModal";
-import { Home, Globe, Palette, Info } from "lucide-react";
+import { IconHome, IconWorld, IconPalette, IconInfoCircle } from "@tabler/icons-react";
 import { tools } from "@/lib/tools";
 
 const navItems = [
-  { icon: Home, label: "主页", path: "/" },
+  { icon: IconHome, label: "主页", path: "/" },
   ...tools
     .filter((t) => t.showInSidebar)
     .map((t) => ({ icon: t.icon, label: t.navLabel, path: t.path })),
@@ -35,7 +35,7 @@ export default function Sidebar() {
                 onClick={() => navigate(item.path)}
                 title={item.label}
               >
-                <Icon size={16} strokeWidth={1.8} />
+                <Icon size={16} stroke={2} />
               </button>
             );
           })}
@@ -51,21 +51,21 @@ export default function Sidebar() {
               );
             }}
           >
-            <Globe size={15} strokeWidth={1.6} />
+            <IconWorld size={16} stroke={2} />
           </button>
           <button
             className="sidebar-btn"
             title="主题"
             onClick={() => setShowThemes(true)}
           >
-            <Palette size={15} strokeWidth={1.6} />
+            <IconPalette size={16} stroke={2} />
           </button>
           <button
             className="sidebar-btn"
             title="关于"
             onClick={() => setShowAbout(true)}
           >
-            <Info size={15} strokeWidth={1.6} />
+            <IconInfoCircle size={16} stroke={2} />
           </button>
         </div>
       </div>

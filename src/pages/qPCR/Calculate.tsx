@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import { IconCircleCheck, IconCircleX } from '@tabler/icons-react';
 import type ExcelJS from 'exceljs';
 import { calculateQpcr } from '@/lib/qpcr-calculate';
 import { detectTransformedGenes } from '@/lib/qpcr-transform';
@@ -101,14 +101,14 @@ export default function Calculate({ workbook, geneNames, onComplete }: Calculate
 
       {status === 'success' && resultMsg && (
         <div className="result-success">
-          <CheckCircle2 size={14} strokeWidth={2} />
+          <IconCircleCheck size={14} stroke={2} />
           <div>{resultMsg}</div>
         </div>
       )}
 
       {status === 'error' && (
         <div className="result-success" style={{ color: '#ff453a', background: 'rgba(255,69,58,0.08)' }}>
-          <XCircle size={14} strokeWidth={2} />
+          <IconCircleX size={14} stroke={2} />
           <div>{errorMsg}</div>
         </div>
       )}

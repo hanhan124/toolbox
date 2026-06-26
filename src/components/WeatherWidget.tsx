@@ -1,15 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  Sun,
-  Cloud,
-  CloudSun,
-  CloudRain,
-  CloudDrizzle,
-  CloudSnow,
-  CloudLightning,
-  CloudFog,
-  MapPin,
-} from "lucide-react";
+  IconSun,
+  IconCloud,
+  IconCloudRain,
+  IconCloudSnow,
+  IconCloudBolt,
+  IconCloudFog,
+  IconMapPin,
+} from "@tabler/icons-react";
 
 /* ========= WMO 天气码 → SVG 图标映射 ========= */
 import type { ComponentType, SVGProps } from "react";
@@ -17,41 +15,41 @@ import type { ComponentType, SVGProps } from "react";
 type IconType = ComponentType<
   SVGProps<SVGSVGElement> & {
     size?: number | string;
-    strokeWidth?: number | string;
+    stroke?: number | string;
     color?: string;
     className?: string;
   }
 >;
 
 const WEATHER_CODES: Record<number, { icon: IconType; label: string }> = {
-  0: { icon: Sun, label: "\u6674" },
-  1: { icon: CloudSun, label: "\u6674\u95F4\u591A\u4E91" },
-  2: { icon: CloudSun, label: "\u591A\u4E91" },
-  3: { icon: Cloud, label: "\u9634" },
-  45: { icon: CloudFog, label: "\u96FE" },
-  48: { icon: CloudFog, label: "\u51BB\u96FE" },
-  51: { icon: CloudDrizzle, label: "\u6BDB\u6BDB\u96E8" },
-  53: { icon: CloudDrizzle, label: "\u6BDB\u6BDB\u96E8" },
-  55: { icon: CloudDrizzle, label: "\u6BDB\u6BDB\u96E8" },
-  56: { icon: CloudDrizzle, label: "\u51BB\u6BDB\u6BDB\u96E8" },
-  57: { icon: CloudDrizzle, label: "\u51BB\u6BDB\u6BDB\u96E8" },
-  61: { icon: CloudRain, label: "\u5C0F\u96E8" },
-  63: { icon: CloudRain, label: "\u4E2D\u96E8" },
-  65: { icon: CloudRain, label: "\u5927\u96E8" },
-  66: { icon: CloudRain, label: "\u51BB\u96E8" },
-  67: { icon: CloudRain, label: "\u51BB\u96E8" },
-  71: { icon: CloudSnow, label: "\u5C0F\u96EA" },
-  73: { icon: CloudSnow, label: "\u4E2D\u96EA" },
-  75: { icon: CloudSnow, label: "\u5927\u96EA" },
-  77: { icon: CloudSnow, label: "\u9635\u96EA" },
-  80: { icon: CloudRain, label: "\u9635\u96E8" },
-  81: { icon: CloudRain, label: "\u9635\u96E8" },
-  82: { icon: CloudRain, label: "\u5F3A\u9635\u96E8" },
-  85: { icon: CloudSnow, label: "\u9635\u96EA" },
-  86: { icon: CloudSnow, label: "\u5F3A\u9635\u96EA" },
-  95: { icon: CloudLightning, label: "\u96F7\u9635\u96E8" },
-  96: { icon: CloudLightning, label: "\u96F7\u9635\u96E8" },
-  99: { icon: CloudLightning, label: "\u96F7\u9635\u96E8" },
+  0: { icon: IconSun, label: "\u6674" },
+  1: { icon: IconSun, label: "\u6674\u95F4\u591A\u4E91" },
+  2: { icon: IconSun, label: "\u591A\u4E91" },
+  3: { icon: IconCloud, label: "\u9634" },
+  45: { icon: IconCloudFog, label: "\u96FE" },
+  48: { icon: IconCloudFog, label: "\u51BB\u96FE" },
+  51: { icon: IconCloudRain, label: "\u6BDB\u6BDB\u96E8" },
+  53: { icon: IconCloudRain, label: "\u6BDB\u6BDB\u96E8" },
+  55: { icon: IconCloudRain, label: "\u6BDB\u6BDB\u96E8" },
+  56: { icon: IconCloudRain, label: "\u51BB\u6BDB\u6BDB\u96E8" },
+  57: { icon: IconCloudRain, label: "\u51BB\u6BDB\u6BDB\u96E8" },
+  61: { icon: IconCloudRain, label: "\u5C0F\u96E8" },
+  63: { icon: IconCloudRain, label: "\u4E2D\u96E8" },
+  65: { icon: IconCloudRain, label: "\u5927\u96E8" },
+  66: { icon: IconCloudRain, label: "\u51BB\u96E8" },
+  67: { icon: IconCloudRain, label: "\u51BB\u96E8" },
+  71: { icon: IconCloudSnow, label: "\u5C0F\u96EA" },
+  73: { icon: IconCloudSnow, label: "\u4E2D\u96EA" },
+  75: { icon: IconCloudSnow, label: "\u5927\u96EA" },
+  77: { icon: IconCloudSnow, label: "\u9635\u96EA" },
+  80: { icon: IconCloudRain, label: "\u9635\u96E8" },
+  81: { icon: IconCloudRain, label: "\u9635\u96E8" },
+  82: { icon: IconCloudRain, label: "\u5F3A\u9635\u96E8" },
+  85: { icon: IconCloudSnow, label: "\u9635\u96EA" },
+  86: { icon: IconCloudSnow, label: "\u5F3A\u9635\u96EA" },
+  95: { icon: IconCloudBolt, label: "\u96F7\u9635\u96E8" },
+  96: { icon: IconCloudBolt, label: "\u96F7\u9635\u96E8" },
+  99: { icon: IconCloudBolt, label: "\u96F7\u9635\u96E8" },
 };
 
 interface WeatherInfo {
@@ -234,7 +232,7 @@ export default function WeatherWidget() {
   }
 
   const info = WEATHER_CODES[weather.weatherCode] ?? {
-    icon: CloudSun,
+    icon: IconSun,
     label: "\u672A\u77E5",
   };
   const WeatherIcon = info.icon;
@@ -246,7 +244,7 @@ export default function WeatherWidget() {
     >
       <WeatherIcon
         size={22}
-        strokeWidth={1.5}
+        stroke={1.5}
         className="weather-icon"
       />
       <div className="weather-info">
@@ -255,7 +253,7 @@ export default function WeatherWidget() {
       </div>
       <span className="weather-divider" />
       <span className="weather-city">
-        <MapPin size={12} strokeWidth={1.5} />
+        <IconMapPin size={12} stroke={1.5} />
         {weather.city}
       </span>
     </div>

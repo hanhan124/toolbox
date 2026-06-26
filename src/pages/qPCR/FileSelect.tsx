@@ -1,7 +1,8 @@
 import { open } from '@tauri-apps/plugin-dialog';
-import { FileSpreadsheet } from 'lucide-react';
+import { IconFileSpreadsheet } from '@tabler/icons-react';
 import { readExcelFile, getSheetNames, type ExcelFile } from '@/lib/excel-io';
 import { showToast } from '@/components/Toast';
+import { useDropZone } from '@/hooks/useDropZone';
 
 interface FileSelectProps {
   file: ExcelFile | null;
@@ -12,6 +13,25 @@ interface FileSelectProps {
 
 export default function FileSelect({ file, sheetName, onFileChange, onSheetChange }: FileSelectProps) {
   const sheets = file ? getSheetNames(file.workbook) : [];
+
+  const handleDrop = async (paths: string[]) => {
+    const excelPath = paths.find((p) =>
+      /\.(xlsx|xls)$/i.test(p),
+    );
+    if (!excelPath) return;
+    try {
+      const name = excelPath.split(/[/\\]/).pop() ?? excelPath;
+      const excelFile = await readExcelFile(excelPath, name);
+      onFileChange(excelFile);
+      const names = getSheetNames(excelFile.workbook);
+      onSheetChange(names[0] ?? '');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      showToast(`文件导入失败: ${msg}`, 'error');
+    }
+  };
+
+  const { dropRef, isDragOver } = useDropZone(handleDrop);
 
   async function handleOpen() {
     try {
@@ -34,14 +54,18 @@ export default function FileSelect({ file, sheetName, onFileChange, onSheetChang
 
   return (
     <>
-      <div className="file-display">
+      <div
+        ref={dropRef}
+        className={`file-display${isDragOver ? ' file-display--drag' : ''}`}
+      >
         <div className="file-icon" style={{ background: '#34c759' }}>
-          <FileSpreadsheet size={20} color="white" strokeWidth={1.5} />
+          <IconFileSpreadsheet size={20} color="white" stroke={1.5} />
         </div>
         <div className="file-info">
           <div className="file-name">{file ? file.name : '未选择文件'}</div>
           <div className="file-path">{file ? file.path : 'xlsx / xls'}</div>
         </div>
+        {isDragOver && <span className="drop-hint">释放以导入</span>}
       </div>
 
       <div className="btn-row">

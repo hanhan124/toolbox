@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { CheckCircle2, XCircle, Info } from "lucide-react";
+import { IconCircleCheck, IconCircleX, IconInfoCircle } from "@tabler/icons-react";
 
 export type ToastType = "success" | "error" | "info";
 
@@ -17,10 +17,10 @@ export function showToast(text: string, type: ToastType = "info") {
   listeners.forEach((fn) => fn(msg));
 }
 
-const ICONS: Record<ToastType, typeof CheckCircle2> = {
-  success: CheckCircle2,
-  error: XCircle,
-  info: Info,
+const ICONS: Record<ToastType, typeof IconCircleCheck> = {
+  success: IconCircleCheck,
+  error: IconCircleX,
+  info: IconInfoCircle,
 };
 
 export default function ToastContainer() {
@@ -48,7 +48,7 @@ export default function ToastContainer() {
         const Icon = ICONS[toast.type];
         return (
           <div key={toast.id} className={`toast ${toast.type}`}>
-            <Icon size={15} strokeWidth={2} className="toast-icon" />
+            <Icon size={16} stroke={2} className="toast-icon" />
             <span>{toast.text}</span>
           </div>
         );

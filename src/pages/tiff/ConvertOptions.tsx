@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Info } from "lucide-react";
+import { IconInfoCircle } from "@tabler/icons-react";
 import type { TiffOptions } from "@/lib/tiff-convert";
 
 const FONTS = ["Arial", "Calibri", "Times New Roman", "微软雅黑", "黑体", "宋体"];
@@ -52,7 +52,7 @@ export default function ConvertOptions({ onConvert, loading, disabled }: Convert
   return (
     <>
       <div className="notice">
-        <Info size={14} strokeWidth={1.8} />
+        <IconInfoCircle size={14} stroke={2} />
         <span>配置文字水印和输出质量</span>
       </div>
 

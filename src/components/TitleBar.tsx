@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { loadConfig, saveAlwaysOnTop } from "@/lib/config";
 import AppMark from "@/components/AppMark";
-import { Minus, Square, Pin, X } from "lucide-react";
+import { IconMinus, IconSquare, IconPin, IconX } from "@tabler/icons-react";
 
 interface TitleBarProps {
   title?: string;
@@ -37,16 +37,16 @@ export default function TitleBar({ title = "Mynx" }: TitleBarProps) {
           }}
           title="窗口置顶"
         >
-          <Pin size={13} strokeWidth={2} />
+          <IconPin size={14} stroke={2} />
         </button>
         <button className="title-bar-btn" data-tauri-no-drag onClick={() => appWindow.minimize()} title="最小化">
-          <Minus size={13} strokeWidth={2} />
+          <IconMinus size={14} stroke={2} />
         </button>
         <button className="title-bar-btn" data-tauri-no-drag onClick={() => appWindow.toggleMaximize()} title="最大化">
-          <Square size={13} strokeWidth={2} />
+          <IconSquare size={14} stroke={2} />
         </button>
         <button className="title-bar-btn title-bar-btn--close" data-tauri-no-drag onClick={() => appWindow.close()} title="关闭">
-          <X size={13} strokeWidth={2} />
+          <IconX size={14} stroke={2} />
         </button>
       </div>
     </div>

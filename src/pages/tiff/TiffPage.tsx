@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Image, Folder, Settings } from "lucide-react";
+import { IconPhoto, IconFolder, IconSettings } from "@tabler/icons-react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { convertTiff, type TiffOptions } from "@/lib/tiff-convert";
 import ConvertOptions from "./ConvertOptions";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import { showToast } from "@/components/Toast";
+import { useDropZone } from "@/hooks/useDropZone";
 
 export default function TiffPage() {
   const [folder, setFolder] = useState<{ name: string; path: string } | null>(null);
@@ -36,13 +37,23 @@ export default function TiffPage() {
     }
   };
 
+  const handleDrop = (paths: string[]) => {
+    const droppedPath = paths[0];
+    if (!droppedPath) return;
+    const parts = droppedPath.replace(/\\/g, "/").split("/");
+    const name = parts[parts.length - 1] || droppedPath;
+    setFolder({ name, path: droppedPath });
+  };
+
+  const { dropRef, isDragOver } = useDropZone(handleDrop);
+
   return (
     <div className="page-shell">
       <LoadingOverlay visible={loading} text="转换中..." />
 
       <div className="panel-header">
         <div className="panel-icon" style={{ background: '#34c759' }}>
-          <Image size={18} color="white" strokeWidth={1.8} />
+          <IconPhoto size={18} color="white" stroke={2} />
         </div>
         <div className="panel-title">
           <h2>TIFF 转 JPG</h2>
@@ -52,18 +63,22 @@ export default function TiffPage() {
 
       <div className="card">
         <div className="card-title">
-          <Folder size={14} strokeWidth={1.8} />
+          <IconFolder size={14} stroke={2} />
           <span>源文件夹</span>
         </div>
         <div className="card-body">
-          <div className="file-display">
+          <div
+            ref={dropRef}
+            className={`file-display${isDragOver ? ' file-display--drag' : ''}`}
+          >
             <div className="file-icon" style={{ background: '#34c759' }}>
-              <Folder size={20} color="white" strokeWidth={1.5} />
+              <IconFolder size={20} color="white" stroke={1.5} />
             </div>
             <div className="file-info">
               <div className="file-name">{folder ? folder.name : '未选择文件夹'}</div>
               <div className="file-path">{folder ? folder.path : '.tif / .tiff 文件目录'}</div>
             </div>
+            {isDragOver && <span className="drop-hint">释放以导入</span>}
           </div>
           <button className="btn btn-primary btn-full" onClick={handlePick}>
             {folder ? '更换文件夹' : '选择文件夹'}
@@ -73,7 +88,7 @@ export default function TiffPage() {
 
       <div className="card">
         <div className="card-title">
-          <Settings size={14} strokeWidth={1.8} />
+          <IconSettings size={14} stroke={2} />
           <span>转换选项</span>
         </div>
         <div className="card-body">

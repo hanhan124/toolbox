@@ -5,7 +5,7 @@ import AppMark from "@/components/AppMark";
 import { showToast, type ToastType } from "@/components/Toast";
 import { showUpdateNotification } from "@/components/UpdateNotification";
 import { checkForUpdates, detectPortable } from "@/lib/updater";
-import { Globe, Loader2 } from "lucide-react";
+import { IconWorld, IconLoader } from "@tabler/icons-react";
 
 interface AboutModalProps {
   open: boolean;
@@ -80,7 +80,7 @@ export default function AboutModal({ open, onClose }: AboutModalProps) {
             );
           }}
         >
-          <Globe size={14} strokeWidth={1.8} />
+          <IconWorld size={14} stroke={2} />
           GitHub
         </button>
       </div>
@@ -92,7 +92,7 @@ export default function AboutModal({ open, onClose }: AboutModalProps) {
       >
         {checkingUpdate ? (
           <>
-            <Loader2 size={14} strokeWidth={2} className="about-spin-icon" />
+            <IconLoader size={14} stroke={2} className="about-spin-icon" />
             检查中...
           </>
         ) : (

@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { type Update, type DownloadEvent } from "@tauri-apps/plugin-updater";
-import { relaunch } from "@tauri-apps/plugin-process";
+import { relaunch, exit } from "@tauri-apps/plugin-process";
 import { invoke } from "@tauri-apps/api/core";
-import { Download, X, AlertCircle, Loader2 } from "lucide-react";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { IconDownload, IconX, IconAlertCircle, IconLoader, IconCircleCheck } from "@tabler/icons-react";
 import { checkForUpdates, detectPortable, type UpdateInfo } from "@/lib/updater";
 
 /* ---- types ------------------------------------------------------------ */
@@ -45,12 +46,13 @@ function formatSpeed(bytesPerSec: number): string {
 function toErrorText(e: unknown): string {
   if (e instanceof Error) {
     const msg = e.message;
-    // Inject user-friendly hints for common failures
+    // Already Chinese messages from Rust
+    if (/[\u4e00-\u9fff]/.test(msg)) return msg;
     if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("fetch")) {
       return "网络连接失败，请检查网络后重试";
     }
     if (msg.includes("signature") || msg.includes("verify") || msg.includes("pubkey")) {
-      return "安装包签名验证失败，请联系开发者确认签名密钥已配置";
+      return "安装包签名验证失败，请联系开发者";
     }
     if (msg.includes("permission") || msg.includes("denied") || msg.includes("EACCES")) {
       return "权限不足，请以管理员身份运行后重试";
@@ -79,17 +81,22 @@ export default function UpdateNotification() {
   // persist across renders
   const updateRef = useRef<Update | null>(null);
   const portableUrlRef = useRef("");
+  const setupUrlRef = useRef("");
   const isPortableRef = useRef(false);
+  const downloadedFilePathRef = useRef(""); // saved path from Rust download
   const startTimeRef = useRef(0);
   const downloadedRef = useRef(0);
   const totalRef = useRef(0);
   const lastUiUpdateRef = useRef(0);
+  const unlistenRef = useRef<UnlistenFn | null>(null);
 
   /* ---- show available dialog (called by both auto and manual) ---------- */
   const showAvailable = useCallback((info: UpdateInfo) => {
     portableUrlRef.current = info.portableUrl ?? "";
+    setupUrlRef.current = info.setupUrl ?? "";
     updateRef.current = info.installedUpdate ?? null;
     isPortableRef.current = info.isPortable;
+    downloadedFilePathRef.current = "";
     setState({
       status: "available",
       version: info.version,
@@ -136,12 +143,20 @@ export default function UpdateNotification() {
     };
   }, [showAvailable]);
 
+  /* ---- cleanup event listener on unmount ------------------------------ */
+  useEffect(() => {
+    return () => {
+      unlistenRef.current?.();
+    };
+  }, []);
+
   /* ---- download: common helpers --------------------------------------- */
   const beginDownload = useCallback(() => {
     startTimeRef.current = Date.now();
     downloadedRef.current = 0;
     totalRef.current = 0;
     lastUiUpdateRef.current = Date.now();
+    downloadedFilePathRef.current = "";
     setState((prev) => ({ ...prev, status: "downloading", progress: 0, error: undefined }));
   }, []);
 
@@ -171,7 +186,7 @@ export default function UpdateNotification() {
     }));
   }, []);
 
-  /* ---- download: installed update -------------------------------------- */
+  /* ---- download: installed update (via Tauri updater plugin) ----------- */
   const handleInstalledUpdate = useCallback(async () => {
     const update = updateRef.current;
     if (!update) return;
@@ -193,8 +208,6 @@ export default function UpdateNotification() {
             break;
         }
       });
-
-      await relaunch();
     } catch (e) {
       setState((prev) => ({
         ...prev,
@@ -204,9 +217,12 @@ export default function UpdateNotification() {
     }
   }, [beginDownload, updateProgressUi, finishDownload]);
 
-  /* ---- download: portable update (with retry) ------------------------- */
-  const handlePortableUpdate = useCallback(async () => {
-    const url = portableUrlRef.current;
+  /* ---- download: Rust-based (portable or setup.exe fallback) ----------- */
+  const handleRustDownload = useCallback(async () => {
+    const isPortable = isPortableRef.current;
+    const url = isPortable ? portableUrlRef.current : setupUrlRef.current;
+    const filename = isPortable ? "mynx_update_temp.exe" : "mynx_setup_temp.exe";
+
     if (!url) {
       setState((prev) => ({ ...prev, status: "error", error: "缺少下载地址" }));
       return;
@@ -214,110 +230,89 @@ export default function UpdateNotification() {
 
     beginDownload();
 
-    let lastError: unknown;
+    // Listen for progress events from Rust
+    const unlisten = await listen<{
+      chunk_length: number;
+      downloaded: number;
+      content_length: number;
+    }>("update-download-progress", (event) => {
+      downloadedRef.current = event.payload.downloaded;
+      totalRef.current = event.payload.content_length;
+      updateProgressUi(event.payload.content_length);
+    });
+    unlistenRef.current = unlisten;
 
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const { tempDir } = await import("@tauri-apps/api/path");
-        const tmpDir = await tempDir();
-        const tempExe = `${tmpDir}\\mynx_update_temp.exe`;
+    try {
+      const filePath = await invoke<string>("download_update_file", {
+        url,
+        filename,
+      });
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 120000);
-        const response = await fetch(url, { signal: controller.signal });
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          throw new Error(
-            response.status === 404
-              ? "安装包尚未就绪，请稍后重试"
-              : `下载失败 (${response.status})`,
-          );
-        }
-
-        const contentLength = parseInt(response.headers.get("content-length") || "0", 10);
-        totalRef.current = contentLength;
-
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error("无法读取响应数据");
-
-        const chunks: Uint8Array[] = [];
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          chunks.push(value);
-          downloadedRef.current += value.length;
-          updateProgressUi(contentLength);
-        }
-
-        // Assemble
-        const { writeFile } = await import("@tauri-apps/plugin-fs");
-        const totalBytes = new Uint8Array(downloadedRef.current);
-        let offset = 0;
-        for (const chunk of chunks) {
-          totalBytes.set(chunk, offset);
-          offset += chunk.length;
-        }
-        await writeFile(tempExe, totalBytes);
-
-        finishDownload();
-
-        // Auto-restart after brief delay so user can see "下载完成"
-        setTimeout(async () => {
-          try {
-            await invoke<undefined>("portable_self_update", { newExePath: tempExe });
-          } catch (e) {
-            setState((prev) => ({
-              ...prev,
-              status: "error",
-              error: toErrorText(e),
-            }));
-          }
-        }, 1500);
-
-        return; // success — exit retry loop
-      } catch (e) {
-        lastError = e;
-        // Only retry on timeout or 5xx server errors
-        if (
-          attempt === 0 &&
-          ((e instanceof DOMException && e.name === "AbortError") ||
-            (e instanceof Error && /5\d\d/.test(e.message)))
-        ) {
-          // Reset download state for retry
-          downloadedRef.current = 0;
-          totalRef.current = 0;
-          startTimeRef.current = Date.now();
-          continue;
-        }
-        break;
-      }
+      downloadedFilePathRef.current = filePath;
+      await unlisten();
+      unlistenRef.current = null;
+      finishDownload();
+    } catch (e) {
+      await unlisten();
+      unlistenRef.current = null;
+      setState((prev) => ({
+        ...prev,
+        status: "error",
+        error: toErrorText(e),
+      }));
     }
-
-    setState((prev) => ({
-      ...prev,
-      status: "error",
-      error: toErrorText(lastError),
-    }));
   }, [beginDownload, updateProgressUi, finishDownload]);
 
   /* ---- actions --------------------------------------------------------- */
   const handleUpdate = useCallback(async () => {
     if (isPortableRef.current) {
-      await handlePortableUpdate();
-    } else {
+      // Portable: download via Rust, then user clicks restart
+      await handleRustDownload();
+    } else if (updateRef.current) {
+      // Installed (Tauri updater): native download + install
       await handleInstalledUpdate();
+    } else if (setupUrlRef.current) {
+      // Installed fallback: download setup.exe via Rust
+      await handleRustDownload();
     }
-  }, [handlePortableUpdate, handleInstalledUpdate]);
+  }, [handleRustDownload, handleInstalledUpdate]);
 
   const handleRestart = useCallback(async () => {
     if (isPortableRef.current) {
-      // portable: temp file should still be there from download phase
+      // Portable: invoke Rust to replace exe and restart
+      const filePath = downloadedFilePathRef.current;
+      if (!filePath) {
+        setState((prev) => ({
+          ...prev,
+          status: "error",
+          error: "更新文件未找到，请重新下载",
+        }));
+        return;
+      }
       try {
-        const { tempDir } = await import("@tauri-apps/api/path");
-        const tmpDir = await tempDir();
-        const tempExe = `${tmpDir}\\mynx_update_temp.exe`;
-        await invoke("portable_self_update", { newExePath: tempExe });
+        await invoke("portable_self_update", { newExePath: filePath });
+      } catch (e) {
+        setState((prev) => ({
+          ...prev,
+          status: "error",
+          error: toErrorText(e),
+        }));
+      }
+    } else if (setupUrlRef.current && !updateRef.current) {
+      // Installed fallback: launch setup.exe then exit
+      const filePath = downloadedFilePathRef.current;
+      if (!filePath) {
+        setState((prev) => ({
+          ...prev,
+          status: "error",
+          error: "安装包未找到，请重新下载",
+        }));
+        return;
+      }
+      try {
+        const { open } = await import("@tauri-apps/plugin-shell");
+        await open(filePath);
+        await exit(0);
       } catch (e) {
         setState((prev) => ({
           ...prev,
@@ -326,6 +321,7 @@ export default function UpdateNotification() {
         }));
       }
     } else {
+      // Installed (Tauri updater): just relaunch
       try {
         await relaunch();
       } catch (e) {
@@ -355,7 +351,7 @@ export default function UpdateNotification() {
           <>
             <div className="update-header">
               <div className="update-icon-wrap">
-                <Download size={16} strokeWidth={2} />
+                <IconDownload size={16} stroke={2} />
               </div>
               <div className="update-title-area">
                 <div className="update-title">发现新版本 v{state.version}</div>
@@ -364,7 +360,7 @@ export default function UpdateNotification() {
                 )}
               </div>
               <button className="update-close" onClick={handleDismiss}>
-                <X size={14} strokeWidth={2} />
+                <IconX size={14} stroke={2} />
               </button>
             </div>
             <div className="update-actions">
@@ -383,7 +379,7 @@ export default function UpdateNotification() {
           <>
             <div className="update-header">
               <div className="update-icon-wrap update-icon-spin">
-                <Loader2 size={16} strokeWidth={2} />
+                <IconLoader size={16} stroke={2} />
               </div>
               <div className="update-title-area">
                 <div className="update-title">正在下载 v{state.version}</div>
@@ -407,7 +403,7 @@ export default function UpdateNotification() {
           </>
         )}
 
-        {/* ---- Download complete ---- */}
+        {/* ---- Download complete — prompt restart ---- */}
         {state.status === "ready" && (
           <>
             <div className="update-header">
@@ -415,13 +411,13 @@ export default function UpdateNotification() {
                 className="update-icon-wrap"
                 style={{ background: "rgba(48,209,88,0.12)", color: "#30d158" }}
               >
-                <Download size={16} strokeWidth={2} />
+                <IconCircleCheck size={16} stroke={2} />
               </div>
               <div className="update-title-area">
-                <div className="update-title">下载完成</div>
+                <div className="update-title">下载完成，重启以完成更新</div>
               </div>
               <button className="update-close" onClick={handleDismiss}>
-                <X size={14} strokeWidth={2} />
+                <IconX size={14} stroke={2} />
               </button>
             </div>
             <div className="update-actions">
@@ -443,14 +439,14 @@ export default function UpdateNotification() {
                 className="update-icon-wrap"
                 style={{ background: "rgba(255,69,58,0.12)", color: "#ff453a" }}
               >
-                <AlertCircle size={16} strokeWidth={2} />
+                <IconAlertCircle size={16} stroke={2} />
               </div>
               <div className="update-title-area">
                 <div className="update-title">更新失败</div>
                 {state.error && <div className="update-body">{state.error}</div>}
               </div>
               <button className="update-close" onClick={handleDismiss}>
-                <X size={14} strokeWidth={2} />
+                <IconX size={14} stroke={2} />
               </button>
             </div>
             <div className="update-actions">

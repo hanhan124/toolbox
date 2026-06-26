@@ -1,5 +1,5 @@
 import type { ComponentType, SVGProps } from "react";
-import { FlaskConical, Image } from "lucide-react";
+import { IconFlask, IconPhoto } from "@tabler/icons-react";
 import { lazy } from "react";
 
 /**
@@ -14,11 +14,11 @@ import { lazy } from "react";
  * generated automatically from this array.
  */
 
-/** Icon component type compatible with lucide-react icons. */
+/** Icon component type compatible with @tabler/icons-react. */
 type IconType = ComponentType<
   SVGProps<SVGSVGElement> & {
     size?: number | string;
-    strokeWidth?: number | string;
+    stroke?: number | string;
     color?: string;
     className?: string;
   }
@@ -32,7 +32,7 @@ export interface Tool {
   path: string;
   /** Accent color for icon background (hex) */
   accent: string;
-  /** lucide-react icon component */
+  /** @tabler/icons-react icon component */
   icon: IconType;
   /** Lazy-loaded page component */
   component: ComponentType;
@@ -52,7 +52,7 @@ export const tools: Tool[] = [
     description: "qPCR 数据处理与图表",
     path: "/qpcr",
     accent: "#007aff",
-    icon: FlaskConical,
+    icon: IconFlask,
     component: QpcrPage,
     navLabel: "qPCR",
     showInSidebar: true,
@@ -63,7 +63,7 @@ export const tools: Tool[] = [
     description: "TIFF 批量转 JPG",
     path: "/tiff",
     accent: "#34c759",
-    icon: Image,
+    icon: IconPhoto,
     component: TiffPage,
     navLabel: "TIFF",
     showInSidebar: true,

@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { IconCheck } from "@tabler/icons-react";
 import { THEMES, type ThemeId } from "@/lib/theme";
 
 interface ThemePickerProps {
@@ -102,7 +102,7 @@ export default function ThemePicker({ value, onSelect }: ThemePickerProps) {
                 <span className="theme-tile-desc">{theme.description}</span>
               </div>
               <span className={`theme-tile-check ${active ? "theme-tile-check--active" : "theme-tile-check--inactive"}`}>
-                <Check size={12} strokeWidth={3} />
+                <IconCheck size={14} stroke={2} />
               </span>
             </div>
           </button>

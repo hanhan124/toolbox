@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Info, CheckCircle2, XCircle } from 'lucide-react';
+import { IconInfoCircle, IconCircleCheck, IconCircleX } from '@tabler/icons-react';
 import type ExcelJS from 'exceljs';
 import { transformQpcrData, detectTransformedGenes } from '@/lib/qpcr-transform';
 
@@ -48,13 +48,13 @@ export default function Transform({ workbook, sheetName, onComplete }: Transform
   return (
     <>
       <div className="notice">
-        <Info size={14} strokeWidth={1.8} />
+        <IconInfoCircle size={14} stroke={2} />
         <span>转置数据为按样本分组，缺失值标黄</span>
       </div>
 
       {showAlreadyTransformed && (
         <div className="result-success">
-          <CheckCircle2 size={14} strokeWidth={2} />
+          <IconCircleCheck size={14} stroke={2} />
           <div>已转换（{existingGenes.length} 个基因），可直接计算</div>
         </div>
       )}
@@ -69,14 +69,14 @@ export default function Transform({ workbook, sheetName, onComplete }: Transform
 
       {status === 'success' && resultMsg && (
         <div className="result-success">
-          <CheckCircle2 size={14} strokeWidth={2} />
+          <IconCircleCheck size={14} stroke={2} />
           <div>{resultMsg}</div>
         </div>
       )}
 
       {status === 'error' && (
         <div className="result-success" style={{ color: 'var(--red)', background: 'rgba(255,59,48,0.08)' }}>
-          <XCircle size={14} strokeWidth={2} />
+          <IconCircleX size={14} stroke={2} />
           <div>{errorMsg}</div>
         </div>
       )}

@@ -39,7 +39,7 @@
 .tool-grid {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
 }
 
@@ -50,7 +50,7 @@
   padding: 12px 14px;
   background: var(--bg-card);
   border: 0.5px solid var(--border);
-  border-radius: 10px;
+  border-radius: 12px;
   text-align: left;
   transition: background 180ms var(--ease-smooth), border-color 180ms var(--ease-smooth);
 }
@@ -72,7 +72,7 @@
   width: 38px;
   height: 38px;
   min-width: 38px;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .tool-card-body {

@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import { X } from "lucide-react";
+import { IconX } from "@tabler/icons-react";
 
 interface ModalProps {
   open: boolean;
@@ -27,7 +27,7 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
           <div className="modal-header">
             <h3>{title}</h3>
             <button className="modal-close-btn" onClick={onClose}>
-              <X size={16} strokeWidth={2} />
+              <IconX size={14} stroke={2} />
             </button>
           </div>
         )}

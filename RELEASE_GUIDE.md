@@ -32,12 +32,12 @@ npm run release 1.9.0
 ### 方法二：手动操作
 
 ```bash
-npm run version 1.9.0
+npm version 1.9.0 --no-git-tag-version
+node scripts/sync-version.cjs
 git add -A
 git commit -m "release: v1.9.0"
 git tag -a v1.9.0 -m "release: v1.9.0"
-git push origin main
-git push origin v1.9.0
+git push origin main --follow-tags
 ```
 
 ---

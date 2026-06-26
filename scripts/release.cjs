@@ -25,14 +25,24 @@ if (status) {
 }
 
 console.log(`\n📦 升级版本: → v${ver}`);
-run(`npm version ${ver} -m "release: v%s"`);
+// npm version 只会 commit package.json，sync-version.cjs 改的文件会漏掉
+// 使用 --no-git-tag-version 抑制自动提交，手动处理确保所有文件同步
+run(`npm version ${ver} --no-git-tag-version --allow-same-version`);
 
-const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf-8"));
-const tag = `v${pkg.version}`;
-console.log(`\n✅ 版本已同步: ${pkg.version}`);
+console.log(`\n📦 同步版本号到其他文件...`);
+run("node scripts/sync-version.cjs");
+
+console.log(`\n📝 提交版本变更...`);
+run("git add -A");
+run(`git commit -m "release: v${ver}"`);
+
+console.log(`\n🏷️  创建标签...`);
+run(`git tag -a v${ver} -m "release: v${ver}"`);
+
+console.log(`\n✅ 版本已同步: ${ver}`);
 
 console.log("\n🚀 推送代码到 GitHub...");
 run("git push origin HEAD --follow-tags");
 
-console.log(`\n✅ 已推送! GitHub Actions 将自动构建并创建 Release: ${tag}`);
+console.log(`\n✅ 已推送! GitHub Actions 将自动构建并创建 Release: v${ver}`);
 console.log(`   查看进度: https://github.com/hanhan124/mynx/actions`);

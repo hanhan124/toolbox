@@ -1,4 +1,4 @@
-import type { ComponentType, SVGProps } from "react";
+import type { ComponentType } from "react";
 import { IconFlask, IconPhoto } from "@tabler/icons-react";
 import { lazy } from "react";
 
@@ -15,14 +15,8 @@ import { lazy } from "react";
  */
 
 /** Icon component type compatible with @tabler/icons-react. */
-type IconType = ComponentType<
-  SVGProps<SVGSVGElement> & {
-    size?: number | string;
-    stroke?: number | string;
-    color?: string;
-    className?: string;
-  }
->;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type IconType = ComponentType<any>;
 
 export interface Tool {
   id: string;

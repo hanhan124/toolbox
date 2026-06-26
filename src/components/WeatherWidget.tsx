@@ -10,16 +10,10 @@ import {
 } from "@tabler/icons-react";
 
 /* ========= WMO 天气码 → SVG 图标映射 ========= */
-import type { ComponentType, SVGProps } from "react";
+import type { ComponentType } from "react";
 
-type IconType = ComponentType<
-  SVGProps<SVGSVGElement> & {
-    size?: number | string;
-    stroke?: number | string;
-    color?: string;
-    className?: string;
-  }
->;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type IconType = ComponentType<any>;
 
 const WEATHER_CODES: Record<number, { icon: IconType; label: string }> = {
   0: { icon: IconSun, label: "\u6674" },

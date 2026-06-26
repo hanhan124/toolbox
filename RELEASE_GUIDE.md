@@ -177,6 +177,16 @@ grep '^version' src-tauri/Cargo.toml
 
 **规则**：`{ }` 里 = JavaScript → 支持 `\uXXXX`。`{ }` 外 = 纯文本 → 不支持。
 
+### 坑 5：`tauri build` 不生成 NSIS `.sig` 文件
+
+**现象**：GitHub Secret 已正确配置，便携版签名正常，但 `latest.json` 中 `signature` 为空，安装版自动更新失败提示"出错，无法更新"。
+
+**原因**：Tauri v2 的 `tauri build` 构建 NSIS 安装包时，即使设置了 `TAURI_SIGNING_PRIVATE_KEY` + `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` 环境变量，也可能不生成 `.sig` 签名文件（已知的不稳定行为）。
+
+**解决**：在 CI workflow 中，`tauri build` 完成后用 `npx tauri signer sign` 手动对 NSIS `.exe` 签名（与便携版相同的处理方式）。
+
+**验证方法**：发版后 curl `latest.json`，确认 `platforms.windows-x86_64.signature` 字段非空。
+
 ### 坑 4：CSP 配置与 API 协议不一致
 
 **现象**：IP 定位接口在浏览器能访问，但 Tauri 应用里报网络错误。
@@ -188,7 +198,8 @@ grep '^version' src-tauri/Cargo.toml
 ```
 connect-src 'self' ipc: http://ipc.localhost
   https://github.com
-  https://objects.githubusercontent.com     （自动更新下载）
+  https://objects.githubusercontent.com     （自动更新清单）
+  https://release-assets.githubusercontent.com （自动更新下载，GitHub CDN 重定向目标）
   https://api.open-meteo.com                 （天气数据）
   https://ipwho.is                           （IP 定位策略1）
   http://ip-api.com                          （IP 定位策略2）

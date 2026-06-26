@@ -31,17 +31,30 @@ const LATEST_JSON_URL =
 
 /* ---- helpers ----------------------------------------------------------- */
 
-/** Detect portable vs installed (no Tauri invocation needed here — caller supplies it). */
-export async function detectPortable(): Promise<boolean> {
-  try {
-    const { invoke } = await import("@tauri-apps/api/core");
-    return await invoke<boolean>("is_portable");
-  } catch {
-    return false;
+/** Fetch latest release info via GitHub REST API (avoids redirect chain). */
+async function fetchLatestViaApi(): Promise<{
+  version: string;
+  body: string;
+}> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const resp = await fetch(
+    "https://api.github.com/repos/hanhan124/mynx/releases/latest",
+    { signal: controller.signal },
+  );
+  clearTimeout(timeoutId);
+
+  if (!resp.ok) {
+    throw new Error(`GitHub API 返回 ${resp.status}，请检查网络后重试`);
   }
+  const json = await resp.json();
+  return {
+    version: json.tag_name.replace(/^v/, ""),
+    body: json.body || json.notes || "",
+  };
 }
 
-/** Fetch and parse latest.json, returns version + body. Retries once on transient failures. */
+/** Fetch latest.json from GitHub Release assets. Retries once on transient failures. */
 async function fetchLatestMeta(): Promise<{
   version: string;
   body: string;
@@ -89,6 +102,15 @@ async function fetchLatestMeta(): Promise<{
   throw lastError;
 }
 
+export async function detectPortable(): Promise<boolean> {
+  try {
+    const { invoke } = await import("@tauri-apps/api/core");
+    return await invoke<boolean>("is_portable");
+  } catch {
+    return false;
+  }
+}
+
 /* ---- main entry -------------------------------------------------------- */
 
 /**
@@ -102,7 +124,13 @@ export async function checkForUpdates(
 ): Promise<CheckResult> {
   if (isPortable) {
     // Portable path: fetch latest.json, compare versions
-    const latest = await fetchLatestMeta();
+    // Try direct fetch first, fall back to GitHub API if redirect chain fails
+    let latest;
+    try {
+      latest = await fetchLatestMeta();
+    } catch {
+      latest = await fetchLatestViaApi();
+    }
     const current = await getVersion();
 
     if (compareVersions(latest.version, current) <= 0) {

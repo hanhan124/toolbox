@@ -85,7 +85,7 @@ jobs:
 
           Write-Host "==> Preparing assets for version $version"
 
-          # 1. NSIS installer + .sig
+          # 1. NSIS installer — manual signing (tauri build may skip it)
           $nsisExe = Get-ChildItem "$nsisDir\Mynx*setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
           $nsisSig = Get-ChildItem "$nsisDir\Mynx*setup.exe.sig" -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($nsisExe) {
@@ -94,9 +94,24 @@ jobs:
             Write-Host "==> NSIS installer NOT found"
           }
           if ($nsisSig) {
-            Write-Host "==> NSIS setup IS signed: $($nsisSig.Name)"
+            Write-Host "==> NSIS setup already signed by tauri build: $($nsisSig.Name)"
+          } elseif ($env:KEY_AVAILABLE -eq 'true' -and $keyPath -and (Test-Path $keyPath) -and $keyPassword) {
+            Write-Host "==> Signing NSIS installer manually..."
+            & npx tauri signer sign -f "$keyPath" -p "$keyPassword" "$($nsisExe.FullName)"
+            $nsisSignExit = $LASTEXITCODE
+            if ($nsisSignExit -eq 0) {
+              $nsisSig = Get-ChildItem "$nsisDir\Mynx*setup.exe.sig" -ErrorAction SilentlyContinue | Select-Object -First 1
+              if ($nsisSig) {
+                Write-Host "    NSIS signing OK: $($nsisSig.Name)"
+              } else {
+                Write-Host "    NSIS signing: tauri signer exited 0 but no .sig found"
+              }
+            } else {
+              Write-Host "    NSIS signing failed (exit $nsisSignExit)"
+            }
+            $LASTEXITCODE = 0
           } else {
-            Write-Host "==> NSIS setup NOT signed — auto-update will not work"
+            Write-Host "==> NSIS setup NOT signed — key or password unavailable"
           }
 
           # 2. Portable exe
